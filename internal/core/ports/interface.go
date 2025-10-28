@@ -68,7 +68,7 @@ type DalService interface {
 	DeleteDriver(ctx context.Context, driverID string) error
 
 	ChangeDriverStatus(ctx context.Context, driverID string, newStatus string, expectedStatus string) error
-	ListAvailableDriversNear(ctx context.Context, lat float64, lng float64, radiusMeters int, vehicleType *string, limit int, offset int) ([]models.Driver, error)
+	ListAvailableDriversNear(ctx context.Context) ([]models.Driver, error)
 	RecordDriverLocation(ctx context.Context, location models.LocationHistory) (string, error)
 
 	GetDriverLastLocation(ctx context.Context, driverID string) (*models.LocationHistory, error)

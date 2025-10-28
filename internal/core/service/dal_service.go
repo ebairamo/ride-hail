@@ -52,7 +52,7 @@ func (svc *DalService) ChangeDriverStatus(ctx context.Context, driverID string, 
 	return nil
 }
 
-func (svc *DalService) ListAvailableDriversNear(ctx context.Context, lat float64, lng float64, radiusMeters int, vehicleType *string, limit int, offset int) ([]models.Driver, error) {
+func (svc *DalService) ListAvailableDriversNear(ctx context.Context) ([]models.Driver, error) {
 	return []models.Driver{}, nil
 }
 
