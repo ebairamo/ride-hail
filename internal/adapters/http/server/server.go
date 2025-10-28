@@ -7,6 +7,7 @@ import (
 
 	"ride-hail/config"
 	"ride-hail/internal/adapters/http/handle"
+	"ride-hail/internal/adapters/websocket"
 	"ride-hail/internal/core/domain/action"
 	"ride-hail/internal/core/domain/types"
 	"ride-hail/pkg/logger"
@@ -24,6 +25,7 @@ type handlers struct {
 	auth handle.AuthHandle
 	ride handle.RideHandler
 	dal  handle.DalHandler
+	ws   websocket.DriverWebSocketHandler
 }
 
 type Server interface {
@@ -31,10 +33,12 @@ type Server interface {
 	Stop(ctx context.Context) error
 }
 
-func New(cfg config.Config, log *logger.Logger, auth handle.AuthHandle, ride handle.RideHandler) (*API, error) {
+func New(cfg config.Config, log *logger.Logger, auth handle.AuthHandle, ride handle.RideHandler, dal handle.DalHandler, ws *websocket.DriverWebSocketHandler) (*API, error) {
 	h := &handlers{
 		auth: auth,
 		ride: ride,
+		dal:  dal,
+		ws:   *ws,
 	}
 
 	api := &API{

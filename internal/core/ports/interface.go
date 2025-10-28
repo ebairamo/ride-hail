@@ -52,6 +52,11 @@ type DriverRepository interface {
 	DeleteDriver(ctx context.Context, id string) error
 	ListDriversByStatus(ctx context.Context, status string, limit, offset int) ([]models.Driver, error)
 	UpdateDriverStatus(ctx context.Context, driverID string, newStatus string) error
+	CreateSession(ctx context.Context, driverID string) (string, error)
+	EndSession(ctx context.Context, driverID string) (*models.DriverSession, error)
+	GetActiveSessionID(ctx context.Context, driverID string) (string, error)
+	FindNearbyDrivers(ctx context.Context, latitude, longitude float64, vehicleType string, radiusMeters int, limit int) ([]models.Driver, error)
+	UpdateDriverWithStatusCondition(ctx context.Context, driverID, newStatus, expectedStatus string) error
 }
 
 type LocationRepository interface {
@@ -59,6 +64,8 @@ type LocationRepository interface {
 	GetLastLocationByDriver(ctx context.Context, driverID string) (*models.LocationHistory, error)
 	GetLocationHistoryByDriver(ctx context.Context, driverID string, limit int) ([]models.LocationHistory, error)
 	DeleteLocationHistory(ctx context.Context, driverID string, before time.Time) error
+	UpdateDriverCurrentLocation(ctx context.Context, driverID string, coordinateID string, latitude, longitude float64, accuracyMeters, speedKmh, headingDegrees *float64) (string, error)
+	ArchiveOldCoordinates(ctx context.Context, before time.Time) error
 }
 
 type DalService interface {
@@ -68,8 +75,8 @@ type DalService interface {
 	DeleteDriver(ctx context.Context, driverID string) error
 
 	ChangeDriverStatus(ctx context.Context, driverID string, newStatus string, expectedStatus string) error
-	ListAvailableDriversNear(ctx context.Context) ([]models.Driver, error)
-	RecordDriverLocation(ctx context.Context, location models.LocationHistory) (string, error)
+	ListAvailableDriversNear(ctx context.Context, latitude, longitude float64, vehicleType string, radiusMeters int, limit int) ([]models.Driver, error)
+	RecordDriverLocation(ctx context.Context, driverID string, latitude, longitude float64, accuracyMeters, speedKmh, headingDegrees *float64) (string, error)
 
 	GetDriverLastLocation(ctx context.Context, driverID string) (*models.LocationHistory, error)
 	GetDriverLocationHistory(ctx context.Context, driverID string, limit int) ([]models.LocationHistory, error)
@@ -77,5 +84,7 @@ type DalService interface {
 	ClearOldLocations(ctx context.Context, driverID string, before time.Time) error
 
 	StartDriverSession(ctx context.Context, driverID string) (string, error)
-	EndDriverSession(ctx context.Context, sessionID string) error
+	EndDriverSession(ctx context.Context, driverID string) (*models.DriverSession, error)
+
+	FindNearbyDrivers(ctx context.Context, latitude, longitude float64, vehicleType string, radiusMeters int, limit int) ([]models.Driver, error)
 }

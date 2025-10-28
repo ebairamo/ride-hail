@@ -24,7 +24,7 @@ const (
 type Logger struct {
 	service  string
 	hostname string
-	slog     *slog.Logger
+	Slog     *slog.Logger
 }
 
 // NewLogger создаёт новый логгер с опциями
@@ -50,7 +50,7 @@ func NewLogger(service string, opts LoggerOptions) *Logger {
 	return &Logger{
 		service:  service,
 		hostname: hostname,
-		slog:     slog.New(handler),
+		Slog:     slog.New(handler),
 	}
 }
 
@@ -66,7 +66,7 @@ func (l *Logger) Func(prefix string) *FuncLogger {
 		service:  l.service,
 		prefix:   prefix,
 		hostname: l.hostname,
-		slog:     l.slog,
+		slog:     l.Slog,
 	}
 }
 

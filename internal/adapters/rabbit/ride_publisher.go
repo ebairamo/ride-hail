@@ -3,8 +3,9 @@ package rabbit
 import (
 	"errors"
 	"fmt"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"sync"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Publisher struct {
@@ -12,7 +13,7 @@ type Publisher struct {
 	mutex sync.Mutex
 }
 
-func NewRidePublisher(conn *amqp.Connection) *Publisher {
+func NewPublisher(conn *amqp.Connection) *Publisher {
 	return &Publisher{
 		conn: conn,
 	}

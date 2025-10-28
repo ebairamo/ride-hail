@@ -16,3 +16,11 @@ var (
 	CreateRide = "create ride"
 	CloseRide  = "close ride"
 )
+
+var (
+	StartDriverSession   = "driver goes online"
+	EndDriverSession     = "driver goes offline"
+	UpdateDriverLocation = "update driver location"
+	StartRide            = "start ride"
+	CompleteRide         = "complete ride"
+)

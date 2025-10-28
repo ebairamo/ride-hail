@@ -45,7 +45,7 @@ func New(ctx context.Context, cfg config.Config) (*RideService, error) {
 		return nil, err
 	}
 
-	rPub := rabbit.NewRidePublisher(rb.Conn)
+	rPub := rabbit.NewPublisher(rb.Conn)
 
 	tmx := txm.NewTXManager(pg.Pool)
 
@@ -55,7 +55,7 @@ func New(ctx context.Context, cfg config.Config) (*RideService, error) {
 	authHandle := handle.New(cfg, authServ, log)
 	rideHandle := handle.NewRideHandle(rideServ, log)
 
-	serv, err := server.New(cfg, log, authHandle, rideHandle)
+	serv, err := server.New(cfg, log, authHandle, rideHandle, nil, nil)
 	if err != nil {
 		return nil, err
 	}
