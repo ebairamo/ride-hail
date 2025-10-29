@@ -12,6 +12,7 @@ import (
 	"ride-hail/pkg/logger"
 	rb "ride-hail/pkg/rabbit"
 	"ride-hail/pkg/txm"
+	"ride-hail/pkg/wsm"
 
 	"ride-hail/config"
 	pg "ride-hail/pkg/potgres"
@@ -49,6 +50,8 @@ func New(ctx context.Context, cfg config.Config) (*RideService, error) {
 	rPub := rabbit.NewPublisher(rb.Conn)
 
 	tmx := txm.NewTXManager(pg.Pool)
+
+	wsM := wsm.NewWSManager()
 
 	authServ := service.NewAuthService(cfg, uRepo, log)
 	rideServ := service.NewRideService(log, tmx, rRepo, cRepo, rPub)

@@ -5,14 +5,14 @@ var (
 	Login            = "login"
 	StartApplication = "start application"
 	StopApplication  = "stop application"
-	RequestInit      = "request init"
 )
 
 var Authorization = "authorization"
 
 var (
-	CreateRide = "create ride"
-	CloseRide  = "close ride"
+	CreateRide  = "create ride"
+	CloseRide   = "close ride"
+	WSPassenger = "ws passenger"
 )
 
 var (
