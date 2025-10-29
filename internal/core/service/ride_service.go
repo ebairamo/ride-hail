@@ -11,6 +11,7 @@ import (
 	"ride-hail/internal/core/service/calculator"
 	"ride-hail/pkg/logger"
 	"ride-hail/pkg/txm"
+	"ride-hail/pkg/wsm"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type RideService struct {
 	log       *logger.Logger
 	repo      Repository
 	txm       txm.Manager
+	wsm       wsm.ServiceWS
 	msgBroker MsgBroker
 }
 
@@ -30,10 +32,11 @@ type Repository struct {
 	cord ports.CoordinatesRepository
 }
 
-func NewRideService(log *logger.Logger, txm txm.Manager, rideRepo ports.RideRepository, cordRepo ports.CoordinatesRepository, rPub ports.RidePublisher) *RideService {
+func NewRideService(log *logger.Logger, txm txm.Manager, rideRepo ports.RideRepository, cordRepo ports.CoordinatesRepository, rPub ports.RidePublisher, wsm wsm.ServiceWS) *RideService {
 	return &RideService{
 		log: log,
 		txm: txm,
+		wsm: wsm,
 		repo: Repository{
 			ride: rideRepo,
 			cord: cordRepo,

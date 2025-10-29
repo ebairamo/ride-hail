@@ -1,4 +1,4 @@
-package pkg
+package wsm
 
 import (
 	"fmt"
@@ -19,11 +19,11 @@ func NewWSManager() *WSManager {
 
 type HandlerWS interface {
 	AddConn(id string, conn *websocket.Conn)
+	Send(id string, msg []byte) error
 	RemoveConn(rideID string)
 }
 
 type ServiceWS interface {
-	Send(id string, msg []byte) error
 	Broadcast(msg []byte)
 	RemoveConn(id string)
 }
