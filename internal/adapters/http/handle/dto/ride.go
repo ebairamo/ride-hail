@@ -3,8 +3,9 @@ package dto
 import (
 	"fmt"
 	"regexp"
-	"ride-hail/internal/core/domain/models"
 	"strings"
+
+	"ride-hail/internal/core/domain/models"
 )
 
 type RideRules struct {

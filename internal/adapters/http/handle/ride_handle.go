@@ -3,13 +3,14 @@ package handle
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
+
 	"ride-hail/internal/adapters/http/handle/dto"
 	"ride-hail/internal/core/domain/action"
 	"ride-hail/internal/core/domain/models"
 	"ride-hail/internal/core/domain/types"
 	"ride-hail/internal/core/ports"
 	"ride-hail/pkg/logger"
-	"strings"
 )
 
 type RideHandle struct {

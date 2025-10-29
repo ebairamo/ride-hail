@@ -1,9 +1,10 @@
-package pkg
+package wsm
 
 import (
 	"fmt"
-	"github.com/gorilla/websocket"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 type WSManager struct {

@@ -3,7 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+
 	"ride-hail/config"
+	dal "ride-hail/internal/app/drive"
 	"ride-hail/internal/app/ride"
 	"ride-hail/internal/core/domain/types"
 )
@@ -35,10 +37,11 @@ func initService(ctx context.Context, cfg config.Config) (Service, error) {
 	switch cfg.Mode {
 	case types.ModeAdmin:
 	case types.ModeDAL:
+		return dal.New(ctx, cfg)
 	case types.ModeRide:
 		return ride.New(ctx, cfg)
 	default:
 		return nil, fmt.Errorf("unknown mode: %s", cfg.Mode)
 	}
-	return nil, nil
+	return nil, fmt.Errorf("unknown mode: %s", cfg.Mode)
 }

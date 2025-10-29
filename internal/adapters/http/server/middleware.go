@@ -5,11 +5,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"time"
+
 	"ride-hail/internal/core/domain/action"
 	"ride-hail/pkg/logger"
-	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func (a *API) middleware(next http.Handler) http.Handler {
@@ -56,7 +58,6 @@ func (a *API) jwtMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 			return []byte(a.cfg.JWT.Secret), nil
 		})
-
 		if err != nil {
 			log.Warn(r.Context(), action.Authorization, "failed to parse token", "error", err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)

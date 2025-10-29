@@ -143,3 +143,74 @@ func (repo *LocationRepository) DeleteLocationHistory(ctx context.Context, drive
 
 	return nil
 }
+
+// UpdateDriverCurrentLocation updates the current location for a driver
+func (repo *LocationRepository) UpdateDriverCurrentLocation(ctx context.Context, driverID string, coordinateID string, latitude, longitude float64, accuracyMeters, speedKmh, headingDegrees *float64) (string, error) {
+	ex := executor.GetExecutor(ctx, repo.pool)
+
+	// First, set all previous current locations to false
+	updatePrevQuery := `UPDATE coordinates SET is_current = false WHERE entity_id = $1 AND entity_type = 'driver';`
+	_, err := ex.Exec(ctx, updatePrevQuery, driverID)
+	if err != nil {
+		return "", fmt.Errorf("failed to update previous locations: %w", err)
+	}
+
+	// If coordinate_id is provided, update existing coordinate
+	if coordinateID != "" {
+		updateQuery := `UPDATE coordinates 
+			SET latitude = $1, longitude = $2, distance_km = $3, duration_minutes = $4,
+				is_current = true, updated_at = now()
+			WHERE id = $5 AND entity_id = $6 AND entity_type = 'driver'
+			RETURNING id;`
+		var id string
+		err = ex.QueryRow(ctx, updateQuery, latitude, longitude, accuracyMeters, speedKmh, coordinateID, driverID).Scan(&id)
+		if err != nil {
+			return "", fmt.Errorf("failed to update coordinate: %w", err)
+		}
+		return id, nil
+	}
+
+	// Otherwise, create new coordinate
+	insertQuery := `INSERT INTO coordinates (id, entity_id, entity_type, latitude, longitude, distance_km, is_current)
+		VALUES (gen_random_uuid(), $1, 'driver', $2, $3, $4, true)
+		RETURNING id;`
+	var id string
+	err = ex.QueryRow(ctx, insertQuery, driverID, latitude, longitude, accuracyMeters).Scan(&id)
+	if err != nil {
+		return "", fmt.Errorf("failed to create coordinate: %w", err)
+	}
+	return id, nil
+}
+
+// ArchiveOldCoordinates moves old coordinates to location_history
+func (repo *LocationRepository) ArchiveOldCoordinates(ctx context.Context, before time.Time) error {
+	ex := executor.GetExecutor(ctx, repo.pool)
+
+	query := `INSERT INTO location_history (id, coordinate_id, driver_id, latitude, longitude, recorded_at)
+	SELECT gen_random_uuid(), c.id, c.entity_id, c.latitude, c.longitude, c.created_at
+	FROM coordinates c
+	WHERE c.entity_type = 'driver' 
+		AND c.is_current = false
+		AND c.updated_at < $1
+		AND c.entity_id IN (SELECT id FROM drivers)
+	RETURNING id;`
+
+	result, err := ex.Exec(ctx, query, before)
+	if err != nil {
+		return fmt.Errorf("failed to archive old coordinates: %w", err)
+	}
+
+	_ = result.RowsAffected()
+
+	// Delete the archived coordinates
+	deleteQuery := `DELETE FROM coordinates 
+		WHERE entity_type = 'driver' 
+			AND is_current = false
+			AND updated_at < $1;`
+	_, err = ex.Exec(ctx, deleteQuery, before)
+	if err != nil {
+		return fmt.Errorf("failed to delete archived coordinates: %w", err)
+	}
+
+	return nil
+}
