@@ -24,7 +24,8 @@ type HandlerWS interface {
 }
 
 type ServiceWS interface {
-	Broadcast(msg []byte)
+	Send(id string, msg []byte) error
+	Broadcast(msg []byte) []string
 	RemoveConn(id string)
 }
 

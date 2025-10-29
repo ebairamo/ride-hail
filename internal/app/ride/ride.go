@@ -3,6 +3,7 @@ package ride
 import (
 	"context"
 	"log/slog"
+
 	"ride-hail/internal/adapters/http/handle"
 	"ride-hail/internal/adapters/http/server"
 	"ride-hail/internal/adapters/postgres"
@@ -46,19 +47,19 @@ func New(ctx context.Context, cfg config.Config) (*RideService, error) {
 		return nil, err
 	}
 
-	rPub := rabbit.NewRidePublisher(rb.Conn)
+	rPub := rabbit.NewPublisher(rb.Conn)
 
 	tmx := txm.NewTXManager(pg.Pool)
 
 	wsM := wsm.NewWSManager()
 
 	authServ := service.NewAuthService(cfg, uRepo, log)
-	rideServ := service.NewRideService(log, tmx, rRepo, cRepo, rPub)
+	rideServ := service.NewRideService(log, tmx, rRepo, cRepo, rPub, wsM)
 
 	authHandle := handle.New(cfg, authServ, log)
-	rideHandle := handle.NewRideHandle(rideServ, log)
+	rideHandle := handle.NewRideHandle(rideServ, wsM, log)
 
-	serv, err := server.New(cfg, log, authHandle, rideHandle)
+	serv, err := server.New(cfg, log, authHandle, rideHandle, nil, nil)
 	if err != nil {
 		return nil, err
 	}

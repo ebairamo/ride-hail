@@ -12,7 +12,7 @@ type Publisher struct {
 	mutex sync.Mutex
 }
 
-func NewRidePublisher(conn *amqp.Connection) *Publisher {
+func NewPublisher(conn *amqp.Connection) *Publisher {
 	return &Publisher{
 		conn: conn,
 	}
