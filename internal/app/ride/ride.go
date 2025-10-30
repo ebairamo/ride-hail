@@ -59,7 +59,7 @@ func New(ctx context.Context, cfg config.Config) (*RideService, error) {
 	authHandle := handle.New(cfg, authServ, log)
 	rideHandle := handle.NewRideHandle(rideServ, wsM, log)
 
-	serv, err := server.New(cfg, log, authHandle, rideHandle, nil, nil)
+	serv, err := server.New(cfg, log, authHandle, rideHandle)
 	if err != nil {
 		return nil, err
 	}

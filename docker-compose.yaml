@@ -2,7 +2,8 @@ version: "3.9"
 
 services:
   postgres:
-    image: postgres:15
+    platform: linux/amd64
+    image: postgres:15-alpine
     container_name: ridehail_postgres
     environment:
       POSTGRES_USER: ridehail_user
@@ -15,9 +16,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   rabbitmq:
-    image: rabbitmq:3-management
+    platform: linux/amd64
+    image: rabbitmq:3-management-alpine
     container_name: ridehail_rabbitmq
     restart: always
     environment:
@@ -30,7 +34,8 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
 
   migrate:
-    image: migrate/migrate
+    platform: linux/amd64
+    image: migrate/migrate:latest
     container_name: ridehail_migrate
     volumes:
       - ./migrations:/migrations
@@ -43,7 +48,11 @@ services:
       postgres:
         condition: service_healthy
 
-
 volumes:
   postgres_data:
   rabbitmq_data:
+
+
+
+
+
