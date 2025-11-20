@@ -333,3 +333,339 @@ ws://localhost:8080/ws/drivers/{driver_id}
 
 *Проект выполнен в рамках обучения в ALEM School*
 *Групповой проект с: @akydyrba, @akairamb*
+
+# Ride-Hail 🚗
+
+Real-time distributed ride-hailing platform using Service-Oriented Architecture (SOA). This project demonstrates complex microservices orchestration, RabbitMQ message passing, and WebSocket communication.
+
+## 🚀 Features
+
+- **Ride Management**: complete ride lifecycle from request to completion
+- **Driver Matching**: smart algorithm based on distance, rating, and vehicle type
+- **Real-time Tracking**: GPS positioning updates every 3-5 seconds
+- **WebSocket Communication**: bidirectional communication with passengers and drivers
+- **Message Queuing**: asynchronous communication via RabbitMQ
+- **Admin Dashboard**: system monitoring and analytics
+- **Geospatial Queries**: PostGIS for finding nearby drivers
+- **Dynamic Pricing**: fare calculation based on distance and time
+
+## 🛠️ Tech Stack
+
+- **Language**: Go
+- **Database**: PostgreSQL + PostGIS
+- **Message Queue**: RabbitMQ (AMQP)
+- **WebSocket**: Gorilla WebSocket
+- **Architecture**: SOA (Service-Oriented Architecture)
+- **Patterns**: Fan-out, Topic Exchange, Event Sourcing
+
+## 🏗️ Architecture
+
+The system consists of three microservices:
+
+### Ride Service (Port 3000)
+Orchestrates ride lifecycle and passenger interactions
+- Ride creation and cancellation
+- Fare calculation
+- WebSocket connections with passengers
+- Driver response processing
+
+### Driver & Location Service (Port 3001)
+Manages drivers, matching algorithm, and location tracking
+- Driver registration (online/offline)
+- Driver matching algorithm
+- GPS location updates
+- WebSocket connections with drivers
+
+### Admin Service (Port 3004)
+Monitoring, analytics, and system oversight
+- System metrics overview
+- Active rides list
+- Driver statistics
+- Hotspot analytics
+
+## 📦 Installation
+
+### Requirements
+
+```bash
+# PostgreSQL with PostGIS
+docker run --name postgres-postgis \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=ridehail_db \
+  -p 5432:5432 \
+  -d postgis/postgis
+
+# RabbitMQ
+docker run --name rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -d rabbitmq:management
+```
+
+### Build Project
+
+```bash
+# Clone repository
+git clone https://github.com/ebairamo/ride-hail.git
+cd ride-hail
+
+# Build project
+go build -o ride-hail-system .
+```
+
+## 🎯 Usage
+
+### Configuration
+
+Create `config.yaml` file:
+
+```yaml
+database:
+  host: localhost
+  port: 5432
+  user: ridehail_user
+  password: ridehail_pass
+  database: ridehail_db
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  user: guest
+  password: guest
+
+websocket:
+  port: 8080
+
+services:
+  ride_service: 3000
+  driver_location_service: 3001
+  admin_service: 3004
+```
+
+### Start Services
+
+```bash
+# Start all services
+./ride-hail-system
+```
+
+## 📊 API Endpoints
+
+### Ride Service (Passenger)
+
+**Create Ride**
+```bash
+curl -X POST http://localhost:3000/rides \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "passenger_id": "550e8400-e29b-41d4-a716-446655440001",
+    "pickup_latitude": 43.238949,
+    "pickup_longitude": 76.889709,
+    "pickup_address": "Almaty Central Park",
+    "destination_latitude": 43.222015,
+    "destination_longitude": 76.851511,
+    "destination_address": "Kok-Tobe Hill",
+    "ride_type": "ECONOMY"
+  }'
+```
+
+**Cancel Ride**
+```bash
+curl -X POST http://localhost:3000/rides/{ride_id}/cancel \
+  -H "Authorization: Bearer {token}" \
+  -d '{"reason": "Changed my mind"}'
+```
+
+### Driver & Location Service (Driver)
+
+**Go Online**
+```bash
+curl -X POST http://localhost:3001/drivers/{driver_id}/online \
+  -H "Authorization: Bearer {token}" \
+  -d '{
+    "latitude": 43.238949,
+    "longitude": 76.889709
+  }'
+```
+
+**Update Location**
+```bash
+curl -X POST http://localhost:3001/drivers/{driver_id}/location \
+  -H "Authorization: Bearer {token}" \
+  -d '{
+    "latitude": 43.238949,
+    "longitude": 76.889709,
+    "speed_kmh": 45.0,
+    "heading_degrees": 180.0
+  }'
+```
+
+**Start Ride**
+```bash
+curl -X POST http://localhost:3001/drivers/{driver_id}/start \
+  -H "Authorization: Bearer {token}" \
+  -d '{"ride_id": "550e8400-e29b-41d4-a716-446655440000"}'
+```
+
+**Complete Ride**
+```bash
+curl -X POST http://localhost:3001/drivers/{driver_id}/complete \
+  -H "Authorization: Bearer {token}" \
+  -d '{
+    "ride_id": "550e8400-e29b-41d4-a716-446655440000",
+    "actual_distance_km": 5.5,
+    "actual_duration_minutes": 16
+  }'
+```
+
+### Admin Service
+
+**System Overview**
+```bash
+curl http://localhost:3004/admin/overview \
+  -H "Authorization: Bearer {admin_token}"
+```
+
+**Active Rides**
+```bash
+curl http://localhost:3004/admin/rides/active?page=1&page_size=20 \
+  -H "Authorization: Bearer {admin_token}"
+```
+
+## 🔄 Request Flow
+
+### Phase 1: Ride Request
+1. Passenger creates ride via REST API
+2. Ride Service saves ride to DB (status: REQUESTED)
+3. Message published to RabbitMQ (`ride.request.{type}`)
+
+### Phase 2: Driver Matching
+4. Driver & Location Service receives request
+5. Geospatial query executes to find nearby drivers
+6. Top 3-5 drivers receive offers via WebSocket (30s timeout)
+7. First accepting driver is assigned to ride
+
+### Phase 3: Ride Confirmation
+8. Ride Service receives driver response
+9. Ride status updated (MATCHED)
+10. Passenger receives driver info via WebSocket
+
+### Phase 4: Real-time Tracking
+11. Driver sends GPS updates every 3-5 seconds
+12. Data broadcast via location_fanout exchange
+13. Passenger sees driver location in real-time
+
+### Phase 5: Execution and Completion
+14. Driver starts ride (IN_PROGRESS)
+15. Tracking continues during ride
+16. Driver completes ride (COMPLETED)
+17. Final fare calculated and receipts sent
+
+## 💾 Database Structure
+
+### Main Tables
+
+**users** - users (passengers, drivers, admins)
+**rides** - ride information
+**drivers** - driver profiles
+**coordinates** - locations
+**location_history** - movement history
+**ride_events** - ride events (event sourcing)
+
+## 🎨 WebSocket Protocol
+
+### For Passengers
+```
+ws://localhost:8080/ws/passengers/{passenger_id}
+```
+
+**Authentication:**
+```json
+{
+  "type": "auth",
+  "token": "Bearer {token}"
+}
+```
+
+**Status Update:**
+```json
+{
+  "type": "ride_status_update",
+  "ride_id": "...",
+  "status": "MATCHED",
+  "driver_info": {...}
+}
+```
+
+### For Drivers
+```
+ws://localhost:8080/ws/drivers/{driver_id}
+```
+
+**Ride Offer:**
+```json
+{
+  "type": "ride_offer",
+  "ride_id": "...",
+  "pickup_location": {...},
+  "estimated_fare": 1500.0,
+  "expires_at": "2024-12-16T10:32:00Z"
+}
+```
+
+## 📈 Dynamic Pricing
+
+### Rates
+
+**ECONOMY**
+- Base fare: 500₸
+- Per kilometer: 100₸
+- Per minute: 50₸
+
+**PREMIUM**
+- Base fare: 800₸
+- Per kilometer: 120₸
+- Per minute: 60₸
+
+**XL**
+- Base fare: 1000₸
+- Per kilometer: 150₸
+- Per minute: 75₸
+
+**Formula:**
+```
+final_fare = base + (distance_km × rate_per_km) + (duration_min × rate_per_min)
+```
+
+## 🔐 Security
+
+- JWT tokens for API authentication
+- Separate tokens for passengers/drivers/admin
+- Role-based access control (RBAC)
+- TLS for all communications
+- Coordinate validation (-90 to 90 lat, -180 to 180 lng)
+- WebSocket authentication timeout (5 seconds)
+
+## 🎓 Learning Objectives
+
+This project demonstrates:
+- SOA (Service-Oriented Architecture)
+- Message queue patterns (Topic Exchange, Fanout)
+- WebSocket for real-time communication
+- Geospatial queries (PostGIS)
+- Event Sourcing for audit trails
+- High-concurrency programming
+- Distributed state management
+
+## 🙏 Project Author
+
+**Sabrina Bakirova**
+- Email: bakirova200024@gmail.com
+- [GitHub](https://github.com/sabrina)
+- [LinkedIn](https://www.linkedin.com/in/sabrina-bakirova/)
+
+---
+
+*Project completed as part of ALEM School curriculum*
+*Group project with: @akydyrba, @akairamb*
